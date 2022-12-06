@@ -129,6 +129,13 @@ def select_checkpoint():
         print("Can't run without a checkpoint. Find and place a .ckpt file into any of those locations. The program will exit.", file=sys.stderr)
         exit(1)
 
+    # automatically reload models and try to find one that may be newly created 
+    print(f"Checkpoint {model_checkpoint} not found; reloading checkpoint list", file=sys.stderr)
+    list_models()
+    checkpoint_info = checkpoints_list.get(model_checkpoint, None)
+    if checkpoint_info is not None:
+        return checkpoint_info
+
     checkpoint_info = next(iter(checkpoints_list.values()))
     if model_checkpoint is not None:
         print(f"Checkpoint {model_checkpoint} not found; loading fallback {checkpoint_info.title}", file=sys.stderr)
@@ -198,6 +205,15 @@ def load_model_weights(model, checkpoint_info, vae_file="auto"):
     else:
         # load from file
         print(f"Loading weights [{sd_model_hash}] from {checkpoint_file}")
+
+        if checkpoint_file.endswith(".safetensors"):
+            try:
+                from safetensors.torch import load_file
+            except ImportError as e:
+                raise ImportError(f"The model is in safetensors format and it is not installed, use `pip install safetensors`: {e}")
+            pl_sd = load_file(checkpoint_file, device=shared.weight_load_location)
+        else:
+            pl_sd = torch.load(checkpoint_file, map_location=shared.weight_load_location)
 
         sd = read_state_dict(checkpoint_file)
         model.load_state_dict(sd, strict=False)
