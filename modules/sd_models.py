@@ -130,11 +130,12 @@ def select_checkpoint():
         exit(1)
 
     # automatically reload models and try to find one that may be newly created 
-    print(f"Checkpoint {model_checkpoint} not found; reloading checkpoint list", file=sys.stderr)
-    list_models()
-    checkpoint_info = checkpoints_list.get(model_checkpoint, None)
-    if checkpoint_info is not None:
-        return checkpoint_info
+    if model_checkpoint is not None:
+        print(f"Checkpoint {model_checkpoint} not found; reloading checkpoint list", file=sys.stderr)
+        list_models()
+        checkpoint_info = checkpoints_list.get(model_checkpoint, None)
+        if checkpoint_info is not None:
+            return checkpoint_info
 
     checkpoint_info = next(iter(checkpoints_list.values()))
     if model_checkpoint is not None:
